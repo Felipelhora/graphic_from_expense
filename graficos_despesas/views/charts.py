@@ -29,84 +29,118 @@ class Charts:
 
 
 def __make_charts_pizza():
-    data = DataQuerys().pizza_query()
-    data2 = DataQuerys().pizza_query()
+    data_geral = DataQuerys().pizza_query()
+    data_last_year = DataQuerys().pizza_query_last_year()
+    data_last_month = DataQuerys().pizza_query_last_month()
+    data_actual_month = DataQuerys().pizza_query_actual_month()
+    
 
     # Calcular o total para os percentuais
-    total = data['total_valor'].sum()
-    total2 = data2['total_valor'].sum()
+    total_geral = data_geral['total_valor'].sum()
+    total_last_year = data_last_year['total_valor'].sum()
+    total_last_month = data_last_month['total_valor'].sum()
+    total_actual_month = data_actual_month['total_valor'].sum()
 
     # Calcular o percentual de cada categoria
-    data['percentual'] = (data['total_valor'] / total) * 100
-    data2['percentual'] = (data2['total_valor'] / total2) * 100
+    data_geral['percentual'] = (data_geral['total_valor'] / total_geral) * 100
+    data_last_year['percentual'] = (data_last_year['total_valor'] / total_last_year) * 100
+    data_last_month['percentual'] = (data_last_month['total_valor'] / total_last_month) * 100
+    data_actual_month['percentual'] = (data_actual_month['total_valor'] / total_actual_month) * 100
 
-    # Criar gráfico de pizza com Plotly
-    fig = px.pie(data, 
+    # Criar gráfico de pizza Geral
+    geral = px.pie(data_geral, 
                 names='categoria', 
                 values='total_valor', 
-                hover_data=['percentual'],  # Adiciona o percentual no hover
-                title='Distribuição de Despesas por Categoria',
+                hover_data=['percentual'],  
+                title='Despesas por Categoria Histórico',
                 labels={'categoria': 'Categoria', 'total_valor': 'Valor', 'percentual': 'Percentual'}
                 )
 
-    # Criar gráfico de pizza com Plotly
-    fig2 = px.pie(data2, 
-                names='categoria', 
-                values='total_valor', 
-                hover_data=['percentual'],  # Adiciona o percentual no hover
-                title='Distribuição de Despesas por Categoria',
-                labels={'categoria': 'Categoria', 'total_valor': 'Valor', 'percentual': 'Percentual'}
-                )
-
-    # Usar st.columns() para dividir o layout em duas colunas
-    col1, col2 = st.columns(2)
-
-    # Exibir os gráficos nas respectivas colunas com chaves únicas
-    with col1:
-        st.plotly_chart(fig, use_container_width=True, key="grafico_pizza_1_{}".format(id(fig)))
     
-    with col2:
-         st.plotly_chart(fig2, use_container_width=True, key="grafico_pizza_2_{}".format(id(fig2)))
+    last_year = px.pie(data_last_year, 
+                names='categoria', 
+                values='total_valor', 
+                hover_data=['percentual'],  
+                title='Despesas por Categoria 12 meses',
+                labels={'categoria': 'Categoria', 'total_valor': 'Valor', 'percentual': 'Percentual'}
+                )
+    
+     # Criar gráfico de pizza com Plotly
+    data_last_month = px.pie(data_last_month, 
+                names='categoria', 
+                values='total_valor', 
+                hover_data=['percentual'],  # Adiciona o percentual no hover
+                title='Despesas por Categoria último mês',
+                labels={'categoria': 'Categoria', 'total_valor': 'Valor', 'percentual': 'Percentual'}
+                )
+
+
+
+     # Criar gráfico de pizza com Plotly
+    actual_month = px.pie(data_actual_month, 
+                names='categoria', 
+                values='total_valor', 
+                hover_data=['percentual'],  # Adiciona o percentual no hover
+                title='Despesas por Categoria mês atual',
+                labels={'categoria': 'Categoria', 'total_valor': 'Valor', 'percentual': 'Percentual'}
+                )
+    geral.update_layout(title={'x': 0.2})
+    last_year.update_layout(title={'x': 0.2})
+    data_last_month.update_layout(title={'x': 0.2})
+    actual_month.update_layout(title={'x': 0.2})
+
+     # Adicionando um título grande no topo
+    st.markdown("<h1 style='text-align: center;'>Relatório de Despesas</h1>", unsafe_allow_html=True)
+
+    with st.container():
+        col1, col2 = st.columns(2)
+        with col1:
+            st.plotly_chart(geral, use_container_width=True, key="grafico_pizza_1")
+        with col2:
+            st.plotly_chart(last_year, use_container_width=True, key="grafico_pizza_2")
+    
+    with st.container():
+        col3, col4 = st.columns(2)
+        with col3:
+            st.plotly_chart(data_last_month, use_container_width=True, key="grafico_pizza_3")
+        with col4:
+            st.plotly_chart(actual_month, use_container_width=True, key="grafico_pizza_4")
 
 
 def __make_charts_color(color_line:str, color_point:str, title:str, data:object,  average:float, average_last_12_months:float,average_last_6_months:float):
     with Charts(data) as charts_main:
-        st.subheader(title)
-        st.text(f'-      Média Geral =                R$ {round(average, 2)}')
-        st.text(f'-      Média dos últimos 12 meses = R$ {round(average_last_12_months, 2)}')
-        st.text(f'-      Média dos últimos 6 meses =  R$ {round(average_last_6_months, 2)}')
-        # Criando o gráfico com Altair
+        st.markdown(f"<h2 style='text-align: center;'>{title}</h2>", unsafe_allow_html=True)
+        st.markdown(f"<p style='text-align: center;'>- Média Geral = R$ {round(average, 2)}</p>", unsafe_allow_html=True)
+        st.markdown(f"<p style='text-align: center;'>- Média dos últimos 12 meses = R$ {round(average_last_12_months, 2)}</p>", unsafe_allow_html=True)
+        st.markdown(f"<p style='text-align: center;'>- Média dos últimos 6 meses = R$ {round(average_last_6_months, 2)}</p>", unsafe_allow_html=True)
+
         chart = alt.Chart(charts_main.resumo_mensal).mark_line(color=color_line).encode(
             x='mes_ano:T',
             y='sum:Q',      
             tooltip=['mes_ano:T', 'sum:Q']
+        ).properties(
+            title={
+                "text": title, 
+                "anchor": "middle",   # Título centralizado
+                "fontSize": 18
+            }
         )
-        # Criando o gráfico com Altair
         line_chart = alt.Chart(charts_main.resumo_mensal).mark_line(color=color_line).encode(
-            x='mes_ano:T',  # T significa temporal (data)
-            y='sum:Q',      # Q significa quantitativo (valor)
-            tooltip=['mes_ano:T', 'sum:Q']  # Exibe o mês/ano e a soma ao passar o mouse
+            x='mes_ano:T',
+            y='sum:Q',    
+            tooltip=['mes_ano:T', 'sum:Q']  
         )
-        # Criando os círculos nos pontos de cada mês
         points_chart = alt.Chart(charts_main.resumo_mensal).mark_point(shape='circle', color=color_point, size=70, filled=True).encode(
-            x='mes_ano:T',  # T significa temporal (data)
-            y='sum:Q',      # Q significa quantitativo (valor)
-            tooltip=['mes_ano:T', 'sum:Q']  # Exibe o mês/ano e a soma ao passar o mouse
+            x='mes_ano:T',  
+            y='sum:Q',      
+            tooltip=['mes_ano:T', 'sum:Q']  
         )
-        # Combinando as duas visualizações (linha + pontos)
         chart = line_chart + points_chart
-        # Exibe o gráfico no Streamlit
         st.altair_chart(chart, use_container_width=True)
 
 
 def make_charts():
     __make_charts_pizza()
-    __make_charts_pizza()
-
-
-
-
-
      # Geral
     data = DataQuerys().make_querys(";")
     __make_charts_color(color_line='lightblue', color_point='lightblue', title=f'Gastos Gerais', data=data[0], average=data[1], average_last_12_months=data[2], average_last_6_months=data[3])

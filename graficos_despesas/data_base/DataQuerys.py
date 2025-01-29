@@ -40,15 +40,104 @@ class DataQuerys:
 
     def pizza_query(self):
          with DBConnectionHandler() as db_connection:
-            engine = db_connection.get_engine()
-            query = """
-            select sum(valor) as total_valor, categoria from despesas_gastos_mensais dgm group by (categoria) ORDER BY total_valor DESC
+            query = """SELECT 
+                        SUM(valor) AS total_valor, 
+                        CASE 
+                            WHEN LOWER(categoria) IN ('farmacia', 'farmácia') THEN 'Farmácia'
+                            WHEN LOWER(categoria) IN ('criancas', 'crianças') THEN 'Crianças'
+                            WHEN LOWER(categoria) IN ('família', 'familia') THEN 'Familia'
+                            WHEN LOWER(categoria) IN ('refeicao', 'refeição') THEN 'Refeição'
+                            WHEN LOWER(categoria) IN ('Gasolina', 'gasolina') THEN 'Gasolina'
+                            WHEN LOWER(categoria) IN ('mercado', 'Mercado', 'mercado ') THEN 'Mercado'
+                            WHEN LOWER(categoria) IN ('saidas', 'saídas') THEN 'Saídas'
+                            WHEN LOWER(categoria) IN ('estacionamento', 'outros', 'outros ') THEN 'Outros'
+                            ELSE categoria
+                        END AS categoria_agrupada
+                        FROM despesas_gastos_mensais dgm
+                        GROUP BY categoria_agrupada
+                        ORDER BY total_valor DESC;
+                    """
+            result = db_connection.session.execute(text(query))
+            data = pd.DataFrame(result.fetchall(), columns=['total_valor', 'categoria'])
+
+            return data
+    
+    def pizza_query_last_year(self):
+         with DBConnectionHandler() as db_connection:
+            query = """SELECT 
+                        SUM(valor) AS total_valor, 
+                        CASE 
+                            WHEN LOWER(categoria) IN ('farmacia', 'farmácia') THEN 'Farmácia'
+                            WHEN LOWER(categoria) IN ('criancas', 'crianças') THEN 'Crianças'
+                            WHEN LOWER(categoria) IN ('família', 'familia') THEN 'Família'
+                            WHEN LOWER(categoria) IN ('refeicao', 'refeição') THEN 'Refeição'
+                            WHEN LOWER(categoria) = 'gasolina' THEN 'Gasolina'
+                            WHEN LOWER(categoria) = 'mercado' THEN 'Mercado'
+                            WHEN LOWER(categoria) IN ('saidas', 'saídas') THEN 'Saídas'
+                            WHEN LOWER(categoria) IN ('estacionamento', 'outros') THEN 'Outros'
+                            ELSE categoria
+                        END AS categoria_agrupada
+                    FROM despesas_gastos_mensais dgm
+                    WHERE 
+                        data_evento >= CURRENT_DATE - INTERVAL '12 months'
+                    GROUP BY categoria_agrupada
+                    ORDER BY total_valor DESC;
             """
             result = db_connection.session.execute(text(query))
             data = pd.DataFrame(result.fetchall(), columns=['total_valor', 'categoria'])
-            print(data.dtypes)
+
             return data
-                
+    
+    def pizza_query_last_month(self):
+         with DBConnectionHandler() as db_connection:
+            query = """ SELECT 
+                        SUM(valor) AS total_valor, 
+                        CASE 
+                            WHEN LOWER(categoria) IN ('farmacia', 'farmácia') THEN 'Farmácia'
+                            WHEN LOWER(categoria) IN ('criancas', 'crianças') THEN 'Crianças'
+                            WHEN LOWER(categoria) IN ('família', 'familia') THEN 'Familia'
+                            WHEN LOWER(categoria) IN ('refeicao', 'refeição') THEN 'Refeição'
+                            WHEN LOWER(categoria) IN ('Gasolina', 'gasolina') THEN 'Gasolina'
+                            WHEN LOWER(categoria) IN ('mercado', 'Mercado', 'mercado ') THEN 'Mercado'
+                            WHEN LOWER(categoria) IN ('saidas', 'saídas') THEN 'Saídas'
+                            WHEN LOWER(categoria) IN ('estacionamento', 'outros', 'outros ') THEN 'Outros'
+                            ELSE categoria
+                        END AS categoria_agrupada
+                        FROM despesas_gastos_mensais dgm
+                        WHERE 
+                            data_evento >= DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '1 month'
+                            AND data_evento < DATE_TRUNC('month', CURRENT_DATE)
+                        GROUP BY categoria_agrupada
+                        ORDER BY total_valor DESC;
+            """
+            result = db_connection.session.execute(text(query))
+            data = pd.DataFrame(result.fetchall(), columns=['total_valor', 'categoria'])
+            return data
+
+    def pizza_query_actual_month(self):
+         with DBConnectionHandler() as db_connection:
+            query = """ SELECT 
+                        SUM(valor) AS total_valor, 
+                         CASE 
+                            WHEN LOWER(categoria) IN ('farmacia', 'farmácia') THEN 'Farmácia'
+                            WHEN LOWER(categoria) IN ('criancas', 'crianças') THEN 'Crianças'
+                            WHEN LOWER(categoria) IN ('família', 'familia') THEN 'Familia'
+                            WHEN LOWER(categoria) IN ('refeicao', 'refeição') THEN 'Refeição'
+                            WHEN LOWER(categoria) IN ('Gasolina', 'gasolina') THEN 'Gasolina'
+                            WHEN LOWER(categoria) IN ('mercado', 'Mercado', 'mercado ') THEN 'Mercado'
+                            WHEN LOWER(categoria) IN ('saidas', 'saídas') THEN 'Saídas'
+                            WHEN LOWER(categoria) IN ('estacionamento', 'outros', 'outros ') THEN 'Outros'
+                            ELSE categoria
+                        END AS categoria_agrupada
+                        FROM despesas_gastos_mensais dgm
+                        WHERE DATE_TRUNC('month', data_evento) = DATE_TRUNC('month', CURRENT_DATE)
+                        GROUP BY categoria;
+                    """
+            result = db_connection.session.execute(text(query))
+            data = pd.DataFrame(result.fetchall(), columns=['total_valor', 'categoria'])
+            return data
+
+
     def car_month(self):
          with DBConnectionHandler() as db_connection:
             engine = db_connection.get_engine()

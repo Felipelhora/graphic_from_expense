@@ -24,7 +24,12 @@ class DBConnectionHandler:
             return "postgresql+psycopg2://{}:{}@{}:{}/{}".format(
                                         DB_CONFIG['db_username'], 
                                         DB_CONFIG['db_password'], 
-                                        DB_CONFIG['db_host'], DB_CONFIG['db_port'], DB_CONFIG['db_name'])
+                                        DB_CONFIG['db_host'], 15432, DB_CONFIG['db_name'])
+                        # return "postgresql+psycopg2://{}:{}@{}:{}/{}".format(
+                        #                 DB_CONFIG['db_username'], 
+                        #                 DB_CONFIG['db_password'], 
+                        #                 DB_CONFIG['db_host'], DB_CONFIG['db_port'], DB_CONFIG['db_name'])
+
         except:
             raise ValueError("Problemas na conexão")
 
