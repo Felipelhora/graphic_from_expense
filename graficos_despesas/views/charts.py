@@ -32,12 +32,14 @@ def __make_charts_pizza():
     data_geral = DataQuerys().pizza_query()
     data_last_year = DataQuerys().pizza_query_last_year()
     data_last_month = DataQuerys().pizza_query_last_month()
+    data_before_last_month = DataQuerys().pizza_query_before_last_month()
     data_actual_month = DataQuerys().pizza_query_actual_month()
     
 
     # Calcular o total para os percentuais
     total_geral = data_geral['total_valor'].sum()
     total_last_year = data_last_year['total_valor'].sum()
+    total_data_before_last_month=data_before_last_month['total_valor'].sum()
     total_last_month = data_last_month['total_valor'].sum()
     total_actual_month = data_actual_month['total_valor'].sum()
 
@@ -45,6 +47,7 @@ def __make_charts_pizza():
     data_geral['percentual'] = (data_geral['total_valor'] / total_geral) * 100
     data_last_year['percentual'] = (data_last_year['total_valor'] / total_last_year) * 100
     data_last_month['percentual'] = (data_last_month['total_valor'] / total_last_month) * 100
+    data_before_last_month['percentual'] = (data_last_month['total_valor'] / total_data_before_last_month) * 100
     data_actual_month['percentual'] = (data_actual_month['total_valor'] / total_actual_month) * 100
 
     # Criar gráfico de pizza Geral
@@ -56,7 +59,7 @@ def __make_charts_pizza():
                 labels={'categoria': 'Categoria', 'total_valor': 'Valor', 'percentual': 'Percentual'}
                 )
 
-    
+   
     last_year = px.pie(data_last_year, 
                 names='categoria', 
                 values='total_valor', 
@@ -65,25 +68,51 @@ def __make_charts_pizza():
                 labels={'categoria': 'Categoria', 'total_valor': 'Valor', 'percentual': 'Percentual'}
                 )
     
-     # Criar gráfico de pizza com Plotly
+    # Criar gráfico de pizza com Plotly
+    data_before_last_month = px.pie(data_before_last_month, 
+                names='categoria', 
+                values='total_valor', 
+                hover_data=['percentual'],  # Adiciona o percentual no hover
+                title=f"<b>Despesas por Categoria - penúltimo mês </b><br><span style='font-size:12px'>Total: R$ {round(total_data_before_last_month, 2):,.2f}</span>",
+                labels={'categoria': 'Categoria', 'total_valor': 'Valor', 'percentual': 'Percentual'}
+                )
+
+    # Criar gráfico de pizza com Plotly
     data_last_month = px.pie(data_last_month, 
                 names='categoria', 
                 values='total_valor', 
                 hover_data=['percentual'],  # Adiciona o percentual no hover
-                title='Despesas por Categoria último mês',
+                title=f"<b>Despesas por Categoria - último mês </b><br><span style='font-size:12px'>Total: R$ {round(total_last_month, 2):,.2f}</span>",
                 labels={'categoria': 'Categoria', 'total_valor': 'Valor', 'percentual': 'Percentual'}
                 )
-
-
 
      # Criar gráfico de pizza com Plotly
     actual_month = px.pie(data_actual_month, 
                 names='categoria', 
                 values='total_valor', 
                 hover_data=['percentual'],  # Adiciona o percentual no hover
-                title='Despesas por Categoria mês atual',
+                title=f"<b>Despesas por Categoria - mês atual</b><br><span style='font-size:12px'>Total: R$ {round(total_actual_month, 2):,.2f}</span>",
                 labels={'categoria': 'Categoria', 'total_valor': 'Valor', 'percentual': 'Percentual'}
                 )
+    
+    data_before_last_month.update_layout(
+    title={
+        'x': 0.2,
+        'xanchor': 'left'
+    }
+    )
+    data_last_month.update_layout(
+    title={
+        'x': 0.2,
+        'xanchor': 'left'
+    }
+    )
+    actual_month.update_layout(
+    title={
+        'x': 0.2,
+        'xanchor': 'left'
+    }
+    )
     geral.update_layout(title={'x': 0.2})
     last_year.update_layout(title={'x': 0.2})
     data_last_month.update_layout(title={'x': 0.2})
@@ -102,9 +131,15 @@ def __make_charts_pizza():
     with st.container():
         col3, col4 = st.columns(2)
         with col3:
-            st.plotly_chart(data_last_month, use_container_width=True, key="grafico_pizza_3")
+            st.plotly_chart(data_before_last_month, use_container_width=True, key="grafico_pizza_3")
         with col4:
-            st.plotly_chart(actual_month, use_container_width=True, key="grafico_pizza_4")
+            st.plotly_chart(data_last_month, use_container_width=True, key="grafico_pizza_4")
+    
+    with st.container():
+        col5 = st.columns(1)[0]
+        with col5:
+            st.plotly_chart(actual_month, use_container_width=True, key="grafico_pizza_5")
+        
 
 
 def __make_charts_color(color_line:str, color_point:str, title:str, data:object,  average:float, average_last_12_months:float,average_last_6_months:float):
@@ -159,6 +194,10 @@ def make_charts():
      # Gasolina
     gasolina_data = DataQuerys().make_querys("and (categoria = 'Gasolina' OR categoria = 'gasolina')")
     __make_charts_color(color_line='red', color_point='red', title=f'Gastos com a Gasolina', data=gasolina_data[0], average=gasolina_data[1], average_last_12_months=gasolina_data[2], average_last_6_months=gasolina_data[3])
+    # carro
+    carro_data = DataQuerys().make_querys("and (categoria = 'Carro' or categoria = 'carro')")
+    __make_charts_color(color_line='blue', color_point='white', title=f'Gastos com carro', data=carro_data[0], average=carro_data[1], average_last_12_months=carro_data[2], average_last_6_months=carro_data[3])
+
     # Saidas
     saidas_data = DataQuerys().make_querys("and (categoria = 'saidas' OR categoria = 'saídas')")
     __make_charts_color(color_line='brown', color_point='brown', title=f'Gastos com a Saidas', data=saidas_data[0], average=saidas_data[1], average_last_12_months=saidas_data[2], average_last_6_months=saidas_data[3])
@@ -169,7 +208,7 @@ def make_charts():
     padaria_data = DataQuerys().make_querys("and categoria = 'padaria'")
     __make_charts_color(color_line='yellow', color_point='yellow', title=f'Gastos com a padaria', data=padaria_data[0], average=padaria_data[1], average_last_12_months=padaria_data[2], average_last_6_months=padaria_data[3])
     # refeicao
-    refeicao_data = DataQuerys().make_querys("and (categoria = 'refeicao' OR categoria = 'refeição')")
+    refeicao_data = DataQuerys().make_querys("and (categoria = 'refeicao' OR categoria = 'refeição' OR categoria = 'almoco' OR categoria = 'almoço' OR categoria = 'Almoco' OR categoria = 'Almoço'  )")
     __make_charts_color(color_line='orange', color_point='brown', title=f'Gastos com comida Fora', data=refeicao_data[0], average=refeicao_data[1], average_last_12_months=refeicao_data[2], average_last_6_months=refeicao_data[3])
     # Pessoal
     pessoal_data = DataQuerys().make_querys("and (categoria = 'pessoal')")
@@ -184,3 +223,32 @@ def make_charts():
     # outros
     outros_data = DataQuerys().make_querys("and (categoria = 'outros' or categoria = 'estacionamento')")
     __make_charts_color(color_line='black', color_point='white', title=f'Outros gastos', data=outros_data[0], average=outros_data[1], average_last_12_months=outros_data[2], average_last_6_months=outros_data[3])
+
+    # não classificados
+    nao_classificados_data = DataQuerys().make_querys("""
+    and categoria NOT IN (
+        'farmacia', 'farmácia',
+        'casa', 'Casa', 'carro', 'Carro', 'almoço', 'Almoço', 'almoco', 'Almoco',
+        'mercado',
+        'criancas', 'crianças',
+        'Gasolina', 'gasolina',
+        'saidas', 'saídas',
+        'familia', 'família',
+        'padaria',
+        'refeicao', 'refeição',
+        'pessoal',
+        'trabalho',
+        'viagem',
+        'outros',
+        'estacionamento'
+    )
+    """)
+    __make_charts_color(
+    color_line='cyan',
+    color_point='cyan',
+    title='Gastos não classificados',
+    data=nao_classificados_data[0],
+    average=nao_classificados_data[1],
+    average_last_12_months=nao_classificados_data[2],
+    average_last_6_months=nao_classificados_data[3]
+)
